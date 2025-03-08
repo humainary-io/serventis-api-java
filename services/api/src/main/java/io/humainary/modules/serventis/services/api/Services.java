@@ -336,12 +336,12 @@ public interface Services
 
     /// A signal released indicating the dropping of a service execution.
 
-    DROP ( Sign.DROP, RELEASE ),
+    DISCARD ( Sign.DISCARD, RELEASE ),
 
 
     /// A signal received indicating the dropping of a service execution.
 
-    DROPPED ( Sign.DROP, RECEIPT ),
+    DISCARDED ( Sign.DISCARD, RECEIPT ),
 
 
     /// A signal released indicating the delay of a service execution.
@@ -422,79 +422,76 @@ public interface Services
 
   /// A [Sign] classifies operations, transitions, and outcomes that occur during service request
   /// execution and inter-service calling, such classifications enable analysis of service behavior.
+  ///
+  /// Note: We use the term work here to mean either (remote) call or (local) execution.
 
   enum Sign {
 
 
-    /// Indicates the initiation of a service execution.
-    /// This is the first event in a service's lifecycle.
+    /// Indicates the start of work to be done
+
     START,
 
-    /// Indicates the completion of a service execution, regardless of its outcome.
-    /// This is typically the final signal in a service's interaction.
+    /// Indicates the completion of work
 
     STOP,
 
-    /// Records service operation representing either:
+    /// Indicates the request (call) of a work to be performed (executed)
     /// - Outbound: A caller initiating a request to another service
     /// - Inbound: A service receiving a request from a caller
 
     CALL,
 
-    /// Indicates that a service execution or inter-service call completed
-    /// successfully, meeting all expected criteria.
+    /// Indicates that successful completion of work
 
     SUCCEED,
 
-    /// Indicates that a service execution or inter-service call encountered
-    /// an error condition and did not complete as expected.
+    /// Indicates the failure to complete a unit of work
 
     FAIL,
 
-    /// Indicates activation of a degraded service mode after a failure, such as
-    /// - Serving cached data instead of live data
-    /// - Routing to a backup service
-    /// - Using a simplified alternative implementation
+    /// Indicates the activation of a degraded work mode after a failure
+
     RECOURSE,
 
-    /// Records that a service request was forwarded to a different endpoint
-    /// or handler than originally targeted.
+    /// Indicates the forwarding of the work to another service
+
     REDIRECT,
 
-    /// Indicates that a service execution or call exceeded its allocated
-    /// time budget and was terminated.
+    /// Indicates the elapsing of a time budget for work
+
     ELAPSE,
 
-    /// Records an automatic reattempt of a failed service call, typically
-    /// as part of a retry policy with backoff.
+    /// Indicates the automatic retry of work on an error
+
     RETRY,
 
-    /// Indicates that a service actively declined to process a request,
-    /// typically due to policy violations or resource constraints.
+    /// Indicates the rejection of work
+
     REJECT,
 
-    /// Records that a service request was discarded without processing,
-    /// typically due to overload conditions or circuit breaking.
-    DROP,
+    /// Indicates the discarding of work
 
-    /// Indicates that processing of a request was intentionally
-    /// postponed for later execution.
+    DISCARD,
+
+    /// Indicates the delaying of work.
+
     DELAY,
 
-    /// Records that a service request has been queued for
-    /// execution at a future time.
+    /// Indicates the scheduling of work
+
     SCHEDULE,
 
-    /// Indicates that an in-progress service execution was temporarily
-    /// halted but may resume later.
+    /// Indicates the suspension of work
+
     SUSPEND,
 
-    /// Records that a previously suspended service execution
-    /// has restarted processing.
+    /// Indicates the resumption of work
+
     RESUME,
 
-    /// Indicates a connection failure where the client could not
-    /// establish or maintain network connectivity with the service.
+    /// Indicates the inability to issue work
+
     DISCONNECT,
 
   }
