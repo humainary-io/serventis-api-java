@@ -8,9 +8,10 @@ import static io.humainary.modules.serventis.services.api.Services.Orientation.R
 import static io.humainary.modules.serventis.services.api.Services.Orientation.RELEASE;
 import static io.humainary.modules.serventis.services.api.Services.Signal.*;
 import static io.humainary.substrates.api.Substrates.*;
+import static java.util.Objects.requireNonNull;
 
 
-/// The [Services] class is the entry point into the signals for services API.
+/// The [Services] class is the entry point into the Serventis Services API.
 ///
 /// Services is a new novel approach to the monitoring (observability) of service-to-service interactions
 /// based on signaling theory and social systems regulated in part by local and remote status assessment.
@@ -22,24 +23,28 @@ public interface Services
   extends Composer < Services.Service, Services.Signal > {
 
 
-  /// An interface representing a composite-named service with the ability
-  /// to inspect the availability status and emit or receive signals.
+  /// An interface representing a service, which can be a composition of one or more functions or operations.
   ///
-  /// Note: An SPI implementation of this interface is free to override
-  /// the default methods implementation included here.
+  /// A service is a subject precept (instrument) that emits signals.
 
   @Provided
   interface Service
     extends Pipe < Signal > {
 
-    /// @param fn  the task to be executed
-    /// @param <R> the return type of the task
+    /// A method that emits the appropriate signals for this service in the calling of a function.
+    ///
+    /// @param fn  the function to be called
+    /// @param <R> the return type of the function
     /// @param <T> the throwable class type
-    /// @return The return value of the task execution
-    /// @throws T the throwable thrown by execution of the task
+    /// @return The return value of the function
+    /// @throws T                    the checked exception type of the function
+    /// @throws NullPointerException if the function param is `null`
+
     default < R, T extends Throwable > R call (
-      final Fn < R, T > fn
+      @NotNull final Fn < R, T > fn
     ) throws T {
+
+      requireNonNull ( fn );
 
       emit (
         CALL
@@ -72,14 +77,18 @@ public interface Services
     }
 
 
-    /// @param op  the action to be executed
+    /// A method that emits the appropriate signals for this service in the calling of an operation.
+    ///
+    /// @param op  the operation to be called
     /// @param <T> the throwable class type
-    /// @throws T the throwable thrown by execution of the action
+    /// @throws T                    the checked exception type of the operation
+    /// @throws NullPointerException if the operation param is `null`
 
     default < T extends Throwable > void call (
-      final Op < T > op
+      @NotNull final Op < T > op
     ) throws T {
 
+      requireNonNull ( op );
 
       emit (
         CALL
@@ -113,19 +122,26 @@ public interface Services
     ///
     /// @param signal the [Signal] to be emitted
 
+    @Override
     void emit (
       Signal signal
     );
 
 
-    /// @param fn  the task to be executed
-    /// @param <R> the return type of the task
+    /// A method that emits the appropriate signals for this service in the execution of a function.
+    ///
+    /// @param fn  the function to be executed
+    /// @param <R> the return type of the function
     /// @param <T> the throwable class type
-    /// @return The return value of the task execution
-    /// @throws T the throwable thrown by execution of the task
+    /// @return The return value of the function
+    /// @throws T                    the checked exception type of the function
+    /// @throws NullPointerException if the function param is `null`
+
     default < R, T extends Throwable > R exec (
       final Fn < R, T > fn
     ) throws T {
+
+      requireNonNull ( fn );
 
       emit (
         START
@@ -164,13 +180,18 @@ public interface Services
     }
 
 
-    /// @param op  the action to be executed
+    /// A method that emits the appropriate signals for this service in the execution of an operation.
+    ///
+    /// @param op  the operation to be executed
     /// @param <T> the throwable class type
-    /// @throws T the throwable thrown by execution of the action
+    /// @throws T                    the checked exception type of the operation
+    /// @throws NullPointerException if the operation param is `null`
 
     default < T extends Throwable > void exec (
       final Op < T > op
     ) throws T {
+
+      requireNonNull ( op );
 
       emit (
         START
@@ -213,197 +234,163 @@ public interface Services
 
   enum Signal {
 
-    /// A signal indicating the start of a local service execution.
-    START (
-      Sign.START,
-      RELEASE
-    ),
+    /// A signal released indicating the start of a service's execution
 
-    /// A signal indicating that a remote service execution has started.
-    STARTED (
-      Sign.START,
-      RECEIPT
-    ),
+    START ( Sign.START, RELEASE ),
 
-    /// A signal indicating the completion of a local service execution.
-    STOP (
-      Sign.STOP,
-      RELEASE
-    ),
 
-    /// A signal indicating the completion of a remote service execution
-    STOPPED (
-      Sign.STOP,
-      RECEIPT
-    ),
+    /// A signal received indicating the start of a service's execution
 
-    /// A signal indicating a caller's outbound call to a service, where the subject is callee
-    CALL (
-      Sign.CALL,
-      RELEASE
-    ),
+    STARTED ( Sign.START, RECEIPT ),
 
-    /// A signal indicating an inbound call to a service, where the subject is the caller
-    CALLED (
-      Sign.CALL,
-      RECEIPT
-    ),
 
-    /// A signal indicating the successful completion of a 'local' service execution, where the subject is the caller
-    SUCCEED (
-      Sign.SUCCEED,
-      RELEASE
-    ),
+    /// A signal released indicating the completion of a service's execution.
 
-    /// A signal indicating the successful completion of a 'remote' service execution, where the subject is the callee
-    SUCCEEDED (
-      Sign.SUCCEED,
-      RECEIPT
-    ),
+    STOP ( Sign.STOP, RELEASE ),
 
-    /// A signal emitted indicating the...
-    FAIL (
-      Sign.FAIL,
-      RELEASE
-    ),
 
-    /// A signal received indicating...
-    FAILED (
-      Sign.FAIL,
-      RECEIPT
-    ),
+    /// A signal received indicating the completion of a service's execution
 
-    /// A signal emitted indicating the...
-    RECOURSE (
-      Sign.RECOURSE,
-      RELEASE
-    ),
+    STOPPED ( Sign.STOP, RECEIPT ),
 
-    /// A signal received indicating...
-    RECOURSED (
-      Sign.RECOURSE,
-      RECEIPT
-    ),
 
-    /// A signal emitted indicating the...
-    REDIRECT (
-      Sign.REDIRECT,
-      RELEASE
-    ),
+    /// A signal released indicating the calling of a service
 
-    /// A signal received indicating...
-    REDIRECTED (
-      Sign.REDIRECT,
-      RECEIPT
-    ),
+    CALL ( Sign.CALL, RELEASE ),
 
-    /// A signal emitted indicating the...
-    ELAPSE (
-      Sign.ELAPSE,
-      RELEASE
-    ),
 
-    /// A signal received indicating...
-    ELAPSED (
-      Sign.ELAPSE,
-      RECEIPT
-    ),
+    /// A signal received indicating a service was called
 
-    /// A signal emitted indicating the...
-    RETRY (
-      Sign.RETRY,
-      RELEASE
-    ),
+    CALLED ( Sign.CALL, RECEIPT ),
 
-    /// A signal received indicating...
-    RETRIED (
-      Sign.RETRY,
-      RECEIPT
-    ),
 
-    /// A signal emitted indicating the...
-    REJECT (
-      Sign.REJECT,
-      RELEASE
-    ),
+    /// A signal released indicating the successful completion of a service
 
-    /// A signal received indicating...
-    REJECTED (
-      Sign.REJECT,
-      RECEIPT
-    ),
+    SUCCEED ( Sign.SUCCEED, RELEASE ),
 
-    /// A signal emitted indicating the...
-    DROP (
-      Sign.DROP,
-      RELEASE
-    ),
 
-    /// A signal received indicating...
-    DROPPED (
-      Sign.DROP,
-      RECEIPT
-    ),
+    /// A signal received indicating the successful completion of a service
 
-    /// A signal emitted indicating the...
-    DELAY (
-      Sign.DELAY,
-      RELEASE
-    ),
+    SUCCEEDED ( Sign.SUCCEED, RECEIPT ),
 
-    /// A signal received indicating...
-    DELAYED (
-      Sign.DELAY,
-      RECEIPT
-    ),
 
-    /// A signal emitted indicating the...
-    SCHEDULE (
-      Sign.SCHEDULE,
-      RELEASE
-    ),
+    /// A signal released indicating the failure of a service execution.
 
-    /// A signal received indicating...
-    SCHEDULED (
-      Sign.SCHEDULE,
-      RECEIPT
-    ),
+    FAIL ( Sign.FAIL, RELEASE ),
 
-    /// A signal emitted indicating the...
-    SUSPEND (
-      Sign.SUSPEND,
-      RELEASE
-    ),
 
-    /// A signal received indicating...
-    SUSPENDED (
-      Sign.SUSPEND,
-      RECEIPT
-    ),
+    /// A signal received indicating the failure of a service execution.
 
-    /// A signal emitted indicating the...
-    RESUME (
-      Sign.RESUME,
-      RELEASE
-    ),
+    FAILED ( Sign.FAIL, RECEIPT ),
 
-    /// A signal received indicating...
-    RESUMED (
-      Sign.RESUME,
-      RECEIPT
-    ),
 
-    /// A signal emitted indicating the...
-    DISCONNECT (
-      Sign.DISCONNECT,
-      RELEASE
-    ),
+    /// A signal released indicating the recourse of a service execution.
 
-    /// A signal received indicating...
-    DISCONNECTED (
-      Sign.DISCONNECT,
-      RECEIPT
-    );
+    RECOURSE ( Sign.RECOURSE, RELEASE ),
+
+
+    /// A signal received indicating the recourse of a service execution.
+
+    RECOURSED ( Sign.RECOURSE, RECEIPT ),
+
+
+    /// A signal released indicating the redirection of a service execution.
+
+    REDIRECT ( Sign.REDIRECT, RELEASE ),
+
+
+    /// A signal received indicating the redirection of a service execution.
+
+    REDIRECTED ( Sign.REDIRECT, RECEIPT ),
+
+
+    /// A signal released indicating the elapse of a service execution.
+
+    ELAPSE ( Sign.ELAPSE, RELEASE ),
+
+
+    /// A signal received indicating the elapse of a service execution.
+
+    ELAPSED ( Sign.ELAPSE, RECEIPT ),
+
+
+    /// A signal released indicating the retry of a service execution.
+
+    RETRY ( Sign.RETRY, RELEASE ),
+
+
+    /// A signal received indicating the retry of a service execution.
+
+    RETRIED ( Sign.RETRY, RECEIPT ),
+
+
+    /// A signal released indicating the rejection of a service execution.
+
+    REJECT ( Sign.REJECT, RELEASE ),
+
+
+    /// A signal received indicating the rejection of a service execution.
+
+    REJECTED ( Sign.REJECT, RECEIPT ),
+
+
+    /// A signal released indicating the dropping of a service execution.
+
+    DROP ( Sign.DROP, RELEASE ),
+
+
+    /// A signal received indicating the dropping of a service execution.
+
+    DROPPED ( Sign.DROP, RECEIPT ),
+
+
+    /// A signal released indicating the delay of a service execution.
+
+    DELAY ( Sign.DELAY, RELEASE ),
+
+
+    /// A signal received indicating the delay of a service execution.
+
+    DELAYED ( Sign.DELAY, RECEIPT ),
+
+
+    /// A signal released indicating the scheduling of a service execution.
+
+    SCHEDULE ( Sign.SCHEDULE, RELEASE ),
+
+
+    /// A signal received indicating the scheduling of a service execution.
+
+    SCHEDULED ( Sign.SCHEDULE, RECEIPT ),
+
+
+    /// A signal released indicating the suspension of a service execution.
+
+    SUSPEND ( Sign.SUSPEND, RELEASE ),
+
+
+    /// A signal received indicating the suspension of a service execution.
+
+    SUSPENDED ( Sign.SUSPEND, RECEIPT ),
+
+
+    /// A signal released indicating the resumption of a service execution.
+
+    RESUME ( Sign.RESUME, RELEASE ),
+
+
+    /// A signal received indicating the resumption of a service execution.
+    RESUMED ( Sign.RESUME, RECEIPT ),
+
+
+    /// A signal released indicating the disconnection of a service execution.
+
+    DISCONNECT ( Sign.DISCONNECT, RELEASE ),
+
+
+    /// A signal received indicating the disconnection of a service execution.
+
+    DISCONNECTED ( Sign.DISCONNECT, RECEIPT );
 
     private final Orientation orientation;
     private final Sign        sign;
@@ -413,17 +400,21 @@ public interface Services
       final Orientation orientation
     ) {
 
-      this.orientation = orientation;
-      this.sign = sign;
+      this.orientation = requireNonNull ( orientation );
+      this.sign = requireNonNull ( sign );
 
     }
 
     public Orientation orientation () {
+
       return orientation;
+
     }
 
     public Sign sign () {
+
       return sign;
+
     }
 
   }
@@ -505,6 +496,7 @@ public interface Services
     /// Indicates a connection failure where the client could not
     /// establish or maintain network connectivity with the service.
     DISCONNECT,
+
   }
 
 

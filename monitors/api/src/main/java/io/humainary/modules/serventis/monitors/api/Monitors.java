@@ -7,7 +7,11 @@ package io.humainary.modules.serventis.monitors.api;
 import static io.humainary.substrates.api.Substrates.*;
 
 
-/// The [Monitors] class is the entry point into the signals for monitors API.
+/// The [Monitors] class is the entry point into the Serventis Monitors API.
+///
+/// The Monitors API is used to monitor the operational condition of a subject.
+/// It is used by an observer to emit an assessment of a subject's operational condition
+/// as well as the statistical certainty of that assessment.
 ///
 /// @author autoletics
 /// @since 1.0
