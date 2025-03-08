@@ -27,6 +27,23 @@ public interface Monitors
   interface Monitor
     extends Pipe < Status > {
 
+    ///  Emit a [Status] with the following parameters
+    ///
+    /// @param status the status to be emitted
+    /// @throws NullPointerException if the status param is `null`
+
+    @Override
+    void emit (
+      @NotNull Status status
+    );
+
+
+    ///  Emit a [Status] with the following parameters
+    ///
+    /// @param condition  the condition of the status to be emitted
+    /// @param confidence the confidence of the status to be emitted
+    /// @throws NullPointerException if either param is `null`
+
     void emit (
       @NotNull Condition condition,
       @NotNull Confidence confidence

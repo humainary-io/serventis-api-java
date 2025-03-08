@@ -22,7 +22,6 @@ import static java.util.Objects.requireNonNull;
 public interface Services
   extends Composer < Services.Service, Services.Signal > {
 
-
   /// An interface representing a service, which can be a composition of one or more functions or operations.
   ///
   /// A service is a subject precept (instrument) that emits signals.
@@ -229,6 +228,16 @@ public interface Services
   }
 
 
+  /// Emits a [Signal]
+  ///
+  /// @param signal the signal to be emitted
+  /// @throws NullPointerException if signal param is `null`
+
+  void emit (
+    @NotNull final Signal signal
+  );
+
+
   /// The `Signal` enum represents various types of signals that services can emit.
   ///
   /// Each signal type indicates a specific operation or outcome, and orientation in a service-to-service interaction.
@@ -397,8 +406,8 @@ public interface Services
     private final Sign        sign;
 
     Signal (
-      final Sign sign,
-      final Orientation orientation
+      @NotNull final Sign sign,
+      @NotNull final Orientation orientation
     ) {
 
       this.orientation = requireNonNull ( orientation );
