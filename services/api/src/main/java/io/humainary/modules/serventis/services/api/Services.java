@@ -121,10 +121,11 @@ public interface Services
     /// Emit a signal for this service.
     ///
     /// @param signal the [Signal] to be emitted
+    /// @throws NullPointerException if signal param is `null`
 
     @Override
     void emit (
-      Signal signal
+      @NotNull Signal signal
     );
 
 
@@ -234,161 +235,161 @@ public interface Services
 
   enum Signal {
 
-    /// A signal released indicating the start of a service's execution
+    /// A signal released indicating the start of work to be done
 
     START ( Sign.START, RELEASE ),
 
 
-    /// A signal received indicating the start of a service's execution
+    /// A signal received indicating the start of work to be done
 
     STARTED ( Sign.START, RECEIPT ),
 
 
-    /// A signal released indicating the completion of a service's execution.
+    /// A signal released indicating the completion work
 
     STOP ( Sign.STOP, RELEASE ),
 
 
-    /// A signal received indicating the completion of a service's execution
+    /// A signal received indicating the completion work
 
     STOPPED ( Sign.STOP, RECEIPT ),
 
 
-    /// A signal released indicating the calling of a service
+    /// A signal released indicating the request (call) for work to be done (executed)
 
     CALL ( Sign.CALL, RELEASE ),
 
 
-    /// A signal received indicating a service was called
+    /// A signal received indicating the request (call) for work to be done (executed)
 
     CALLED ( Sign.CALL, RECEIPT ),
 
 
-    /// A signal released indicating the successful completion of a service
+    /// A signal released indicating successful completion of work
 
     SUCCEED ( Sign.SUCCEED, RELEASE ),
 
 
-    /// A signal received indicating the successful completion of a service
+    /// A signal received indicating successful completion of work
 
     SUCCEEDED ( Sign.SUCCEED, RECEIPT ),
 
 
-    /// A signal released indicating the failure of a service execution.
+    /// A signal released indicating failure to complete a unit of work
 
     FAIL ( Sign.FAIL, RELEASE ),
 
 
-    /// A signal received indicating the failure of a service execution.
+    /// A signal received indicating failure to complete a unit of work
 
     FAILED ( Sign.FAIL, RECEIPT ),
 
 
-    /// A signal released indicating the recourse of a service execution.
+    /// A signal released indicating activation of some recourse strategy for work
 
     RECOURSE ( Sign.RECOURSE, RELEASE ),
 
 
-    /// A signal received indicating the recourse of a service execution.
+    /// A signal received indicating activation of some recourse strategy for work
 
     RECOURSED ( Sign.RECOURSE, RECEIPT ),
 
 
-    /// A signal released indicating the redirection of a service execution.
+    /// A signal released indicating the redirection of work to another service
 
     REDIRECT ( Sign.REDIRECT, RELEASE ),
 
 
-    /// A signal received indicating the redirection of a service execution.
+    /// A signal received indicating the redirection of work to another service
 
     REDIRECTED ( Sign.REDIRECT, RECEIPT ),
 
 
-    /// A signal released indicating the elapse of a service execution.
+    /// A signal released indicating the expiration of work
 
-    ELAPSE ( Sign.ELAPSE, RELEASE ),
-
-
-    /// A signal received indicating the elapse of a service execution.
-
-    ELAPSED ( Sign.ELAPSE, RECEIPT ),
+    EXPIRE ( Sign.EXPIRE, RELEASE ),
 
 
-    /// A signal released indicating the retry of a service execution.
+    /// A signal received indicating the expiration of work
+
+    EXPIRED ( Sign.EXPIRE, RECEIPT ),
+
+
+    /// A signal released indicating the retry of work
 
     RETRY ( Sign.RETRY, RELEASE ),
 
 
-    /// A signal received indicating the retry of a service execution.
+    /// A signal received indicating the retry of work
 
     RETRIED ( Sign.RETRY, RECEIPT ),
 
 
-    /// A signal released indicating the rejection of a service execution.
+    /// A signal released indicating the rejection of work
 
     REJECT ( Sign.REJECT, RELEASE ),
 
 
-    /// A signal received indicating the rejection of a service execution.
+    /// A signal received indicating the rejection of work
 
     REJECTED ( Sign.REJECT, RECEIPT ),
 
 
-    /// A signal released indicating the dropping of a service execution.
+    /// A signal released indicating the dropping of work
 
     DISCARD ( Sign.DISCARD, RELEASE ),
 
 
-    /// A signal received indicating the dropping of a service execution.
+    /// A signal received indicating the dropping work
 
     DISCARDED ( Sign.DISCARD, RECEIPT ),
 
 
-    /// A signal released indicating the delay of a service execution.
+    /// A signal released indicating the delay of work
 
     DELAY ( Sign.DELAY, RELEASE ),
 
 
-    /// A signal received indicating the delay of a service execution.
+    /// A signal received indicating the delay of work
 
     DELAYED ( Sign.DELAY, RECEIPT ),
 
 
-    /// A signal released indicating the scheduling of a service execution.
+    /// A signal released indicating the scheduling of work
 
     SCHEDULE ( Sign.SCHEDULE, RELEASE ),
 
 
-    /// A signal received indicating the scheduling of a service execution.
+    /// A signal received indicating the scheduling work
 
     SCHEDULED ( Sign.SCHEDULE, RECEIPT ),
 
 
-    /// A signal released indicating the suspension of a service execution.
+    /// A signal released indicating the suspension of work
 
     SUSPEND ( Sign.SUSPEND, RELEASE ),
 
 
-    /// A signal received indicating the suspension of a service execution.
+    /// A signal received indicating the suspension of work
 
     SUSPENDED ( Sign.SUSPEND, RECEIPT ),
 
 
-    /// A signal released indicating the resumption of a service execution.
+    /// A signal released indicating the resumption of work
 
     RESUME ( Sign.RESUME, RELEASE ),
 
 
-    /// A signal received indicating the resumption of a service execution.
+    /// A signal received indicating the resumption of work
     RESUMED ( Sign.RESUME, RECEIPT ),
 
 
-    /// A signal released indicating the disconnection of a service execution.
+    /// A signal released indicating the disconnection of work
 
     DISCONNECT ( Sign.DISCONNECT, RELEASE ),
 
 
-    /// A signal received indicating the disconnection of a service execution.
+    /// A signal received indicating the disconnection of work
 
     DISCONNECTED ( Sign.DISCONNECT, RECEIPT );
 
@@ -436,9 +437,7 @@ public interface Services
 
     STOP,
 
-    /// Indicates the request (call) of a work to be performed (executed)
-    /// - Outbound: A caller initiating a request to another service
-    /// - Inbound: A service receiving a request from a caller
+    /// Indicates the request (call) for work to be done (executed)
 
     CALL,
 
@@ -458,9 +457,9 @@ public interface Services
 
     REDIRECT,
 
-    /// Indicates the elapsing of a time budget for work
+    /// Indicates the expiration of a time budget for work
 
-    ELAPSE,
+    EXPIRE,
 
     /// Indicates the automatic retry of work on an error
 
