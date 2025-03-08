@@ -15,4 +15,24 @@ moving beyond the yesteryear three-pillar approach.
 
 ## Serventis
 
+Serventis is a semiotic-inspired observability framework designed to provide structured sensing and
+sense-making for distributed systems.
+It defines a contract for monitoring system states and service interactions through a standardized
+language of signals and assessments, enabling adaptive intelligence without enforcing a specific
+implementation.
+
+Serventis consists of:
+
+- **Monitors API** – Tracks the operational condition of services, assessing state transitions with
+  confidence levels.
+
+- **Services API** – Captures service-to-service interactions using structured signals and
+  orientations,
+  based on signaling theory and social system regulation.
+
+By separating observation from interpretation, Serventis enables the integration of agents, machine
+learning models, and scorecards, allowing for context-aware reasoning and autonomous situational
+awareness.
+It is a foundational layer for intelligent observability, supporting distributed coordination,
+adaptive control, and multi-perspective analysis.
 
