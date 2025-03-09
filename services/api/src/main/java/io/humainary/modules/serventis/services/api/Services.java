@@ -241,6 +241,8 @@ public interface Services
   /// The `Signal` enum represents various types of signals that services can emit.
   ///
   /// Each signal type indicates a specific operation or outcome, and orientation in a service-to-service interaction.
+  ///
+  /// Note: We use the term `work` here to mean either (remote) call or (local) execution.
 
   enum Signal {
 
@@ -433,7 +435,7 @@ public interface Services
   /// A [Sign] classifies operations, transitions, and outcomes that occur during service request
   /// execution and inter-service calling, such classifications enable analysis of service behavior.
   ///
-  /// Note: We use the term work here to mean either (remote) call or (local) execution.
+  /// Note: We use the term `work` here to mean either (remote) call or (local) execution.
 
   enum Sign {
 
@@ -511,6 +513,7 @@ public interface Services
   ///
   /// - `RELEASE`: Indicates the projection (release) of a signal from the self-perspective.
   ///   The service is informing other observers (services) of an operation or outcome.
+  ///
   /// - `RECEIPT`: Indicates the acknowledgment (receipt) of a signal observed within some message response or event notification.
   ///   Receipt of a signal should be taken as being generated in the past, whereas release is in the present.
   ///
@@ -520,9 +523,11 @@ public interface Services
   enum Orientation {
 
     /// The projection (release) of a signal.
+
     RELEASE,
 
     /// The perception (receipt) of a signal.
+
     RECEIPT,
 
   }
