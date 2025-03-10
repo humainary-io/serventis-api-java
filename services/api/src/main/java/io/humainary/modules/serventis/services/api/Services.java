@@ -228,16 +228,6 @@ public interface Services
   }
 
 
-  /// Emits a [Signal]
-  ///
-  /// @param signal the signal to be emitted
-  /// @throws NullPointerException if signal param is `null`
-
-  void emit (
-    @NotNull final Signal signal
-  );
-
-
   /// The `Signal` enum represents various types of signals that services can emit.
   ///
   /// Each signal type indicates a specific operation or outcome, and orientation in a service-to-service interaction.
