@@ -501,22 +501,21 @@ public interface Services
   ///
   /// There are two ways a `Sign` can be recorded against a `Service`:
   ///
-  /// - `RELEASE`: Indicates the projection (release) of a signal from the self-perspective.
+  /// - `RELEASE`: Indicates the emission of a sign from a self-perspective.
   ///   The service is informing other observers (services) of an operation or outcome.
-  ///
-  /// - `RECEIPT`: Indicates the acknowledgment (receipt) of a signal observed within some message response or event notification.
-  ///   Receipt of a signal should be taken as being generated in the past, whereas release is in the present.
+  /// - `RECEIPT`: Indicates the reception of a sign observed within some message response or event notification.
+  ///   Receipt of a sign should be taken as being generated in the past, whereas release is in the present.
   ///
   /// This classification helps to understand the context and timing of signals in service interactions.
-  /// Receipt of a signal should be taken as being generated in the past, whereas release is in the present.
+  /// Receipt of a sign should be taken as being generated in the past, whereas release is in the present.
 
   enum Orientation {
 
-    /// The projection (release) of a signal.
+    /// the emission of a sign from a self-perspective
 
     RELEASE,
 
-    /// The perception (receipt) of a signal.
+    /// the reception of a sign observed from an other-perspective
 
     RECEIPT,
 
