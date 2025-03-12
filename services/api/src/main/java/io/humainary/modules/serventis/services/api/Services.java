@@ -28,7 +28,8 @@ public interface Services
 
   @Provided
   interface Service
-    extends Pipe < Signal > {
+    extends Pipe < Signal >,
+            Substrate {
 
     /// A method that emits the appropriate signals for this service in the calling of a function.
     ///
