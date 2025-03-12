@@ -55,7 +55,7 @@ public interface Services
           fn.eval ();
 
         emit (
-          SUCCEED
+          SUCCESS
         );
 
         return
@@ -98,7 +98,7 @@ public interface Services
         op.exec ();
 
         emit (
-          SUCCEED
+          SUCCESS
         );
 
       } catch (
@@ -153,7 +153,7 @@ public interface Services
           fn.eval ();
 
         emit (
-          SUCCEED
+          SUCCESS
         );
 
         return
@@ -202,7 +202,7 @@ public interface Services
         op.exec ();
 
         emit (
-          SUCCEED
+          SUCCESS
         );
 
       } catch (
@@ -268,12 +268,12 @@ public interface Services
 
     /// A signal released indicating successful completion of work
 
-    SUCCEED ( Sign.SUCCEED, RELEASE ),
+    SUCCESS ( Sign.SUCCESS, RELEASE ),
 
 
     /// A signal received indicating successful completion of work
 
-    SUCCEEDED ( Sign.SUCCEED, RECEIPT ),
+    SUCCEEDED ( Sign.SUCCESS, RECEIPT ),
 
 
     /// A signal released indicating failure to complete a unit of work
@@ -444,7 +444,7 @@ public interface Services
 
     /// Indicates that successful completion of work
 
-    SUCCEED,
+    SUCCESS,
 
     /// Indicates the failure to complete a unit of work
 
