@@ -25,7 +25,6 @@ public interface Services
   /// An interface representing a service, which can be a composition of one or more functions or operations.
   ///
   /// A service is a subject precept (instrument) that emits signals.
-
   @Provided
   interface Service
     extends Pipe < Signal >,
@@ -56,7 +55,7 @@ public interface Services
           fn.eval ();
 
         emit (
-          SUCCESS
+          Signal.SUCCESS
         );
 
         return
@@ -99,7 +98,7 @@ public interface Services
         op.exec ();
 
         emit (
-          SUCCESS
+          Signal.SUCCESS
         );
 
       } catch (
@@ -154,7 +153,7 @@ public interface Services
           fn.eval ();
 
         emit (
-          SUCCESS
+          Signal.SUCCESS
         );
 
         return
@@ -203,7 +202,7 @@ public interface Services
         op.exec ();
 
         emit (
-          SUCCESS
+          Signal.SUCCESS
         );
 
       } catch (
@@ -227,7 +226,6 @@ public interface Services
     }
 
   }
-
 
   /// The `Signal` enum represents various types of signals that services can emit.
   ///
@@ -394,6 +392,7 @@ public interface Services
     /// A signal received indicating the disconnection of work
 
     DISCONNECTED ( Sign.DISCONNECT, RECEIPT );
+
 
     private final Orientation orientation;
     private final Sign        sign;
