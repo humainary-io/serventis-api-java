@@ -1,12 +1,9 @@
-/*
- * Copyright (c) 2025 William David Louth
- */
+// Copyright (c) 2025 William David Louth
 
 package io.humainary.modules.serventis.services.api;
 
 import static io.humainary.modules.serventis.services.api.Services.Orientation.RECEIPT;
 import static io.humainary.modules.serventis.services.api.Services.Orientation.RELEASE;
-import static io.humainary.modules.serventis.services.api.Services.Signal.*;
 import static io.humainary.substrates.api.Substrates.*;
 import static java.util.Objects.requireNonNull;
 
@@ -25,10 +22,52 @@ public interface Services
   /// An interface representing a service, which can be a composition of one or more functions or operations.
   ///
   /// A service is a subject precept (instrument) that emits signals.
+
   @Provided
   interface Service
     extends Pipe < Signal >,
             Substrate {
+
+
+    /// A signal released indicating the request (call) for work to be done (executed)
+
+    default void call () { emit ( Signal.CALL ); }
+
+
+    /// A signal received indicating the request (call) for work to be done (executed)
+
+    default void called () { emit ( Signal.CALLED ); }
+
+
+    /// A signal released indicating the delay of work
+
+    default void delay () { emit ( Signal.DELAY ); }
+
+
+    /// A signal received indicating the delay of work
+
+    default void delayed () { emit ( Signal.DELAYED ); }
+
+
+    /// A signal released indicating the dropping of work
+
+    default void discard () { emit ( Signal.DISCARD ); }
+
+
+    /// A signal received indicating the dropping work
+
+    default void discarded () { emit ( Signal.DISCARDED ); }
+
+
+    /// A signal released indicating the disconnection of work
+
+    default void disconnect () { emit ( Signal.DISCONNECT ); }
+
+
+    /// A signal received indicating the disconnection of work
+
+    default void disconnected () { emit ( Signal.DISCONNECTED ); }
+
 
     /// A method that emits the appropriate signals for this service in the calling of a function.
     ///
@@ -39,24 +78,20 @@ public interface Services
     /// @throws T                    the checked exception type of the function
     /// @throws NullPointerException if the function param is `null`
 
-    default < R, T extends Throwable > R call (
+    default < R, T extends Throwable > R dispatch (
       @NotNull final Fn < R, T > fn
     ) throws T {
 
       requireNonNull ( fn );
 
-      emit (
-        CALL
-      );
+      call ();
 
       try {
 
         final var result =
           fn.eval ();
 
-        emit (
-          Signal.SUCCESS
-        );
+        success ();
 
         return
           result;
@@ -65,9 +100,7 @@ public interface Services
         final Throwable t
       ) {
 
-        emit (
-          FAIL
-        );
+        fail ();
 
         throw t;
 
@@ -83,31 +116,25 @@ public interface Services
     /// @throws T                    the checked exception type of the operation
     /// @throws NullPointerException if the operation param is `null`
 
-    default < T extends Throwable > void call (
+    default < T extends Throwable > void dispatch (
       @NotNull final Op < T > op
     ) throws T {
 
       requireNonNull ( op );
 
-      emit (
-        CALL
-      );
+      call ();
 
       try {
 
         op.exec ();
 
-        emit (
-          Signal.SUCCESS
-        );
+        success ();
 
       } catch (
         final Throwable t
       ) {
 
-        emit (
-          FAIL
-        );
+        fail ();
 
         throw t;
 
@@ -137,24 +164,20 @@ public interface Services
     /// @throws T                    the checked exception type of the function
     /// @throws NullPointerException if the function param is `null`
 
-    default < R, T extends Throwable > R exec (
+    default < R, T extends Throwable > R execute (
       final Fn < R, T > fn
     ) throws T {
 
       requireNonNull ( fn );
 
-      emit (
-        START
-      );
+      start ();
 
       try {
 
         final var result =
           fn.eval ();
 
-        emit (
-          Signal.SUCCESS
-        );
+        success ();
 
         return
           result;
@@ -163,17 +186,13 @@ public interface Services
         final Throwable t
       ) {
 
-        emit (
-          FAIL
-        );
+        fail ();
 
         throw t;
 
       } finally {
 
-        emit (
-          STOP
-        );
+        stop ();
 
       }
 
@@ -187,43 +206,164 @@ public interface Services
     /// @throws T                    the checked exception type of the operation
     /// @throws NullPointerException if the operation param is `null`
 
-    default < T extends Throwable > void exec (
+    default < T extends Throwable > void execute (
       final Op < T > op
     ) throws T {
 
       requireNonNull ( op );
 
-      emit (
-        START
-      );
+      start ();
 
       try {
 
         op.exec ();
 
-        emit (
-          Signal.SUCCESS
-        );
+        success ();
 
       } catch (
         final Throwable t
       ) {
 
-        emit (
-          FAIL
-        );
+        fail ();
 
         throw t;
 
       } finally {
 
-        emit (
-          STOP
-        );
+        stop ();
 
       }
 
     }
+
+
+    /// A signal released indicating the expiration of work
+
+    default void expire () { emit ( Signal.EXPIRE ); }
+
+
+    /// A signal received indicating the expiration of work
+
+    default void expired () { emit ( Signal.EXPIRED ); }
+
+
+    /// A signal released indicating failure to complete a unit of work
+
+    default void fail () { emit ( Signal.FAIL ); }
+
+
+    /// A signal received indicating failure to complete a unit of work
+
+    default void failed () { emit ( Signal.FAILED ); }
+
+
+    /// A signal released indicating activation of some recourse strategy for work
+
+    default void recourse () { emit ( Signal.RECOURSE ); }
+
+
+    /// A signal received indicating activation of some recourse strategy for work
+
+    default void recoursed () { emit ( Signal.RECOURSED ); }
+
+
+    /// A signal released indicating the redirection of work to another service
+
+    default void redirect () { emit ( Signal.REDIRECT ); }
+
+
+    /// A signal received indicating the redirection of work to another service
+
+    default void redirected () { emit ( Signal.REDIRECTED ); }
+
+
+    /// A signal released indicating the rejection of work
+
+    default void reject () { emit ( Signal.REJECT ); }
+
+
+    /// A signal received indicating the rejection of work
+
+    default void rejected () { emit ( Signal.REJECTED ); }
+
+
+    /// A signal released indicating the resumption of work
+
+    default void resume () { emit ( Signal.RESUME ); }
+
+
+    /// A signal received indicating the resumption of work
+
+    default void resumed () { emit ( Signal.RESUMED ); }
+
+
+    /// A signal received indicating the retry of work
+
+    default void retried () { emit ( Signal.RETRIED ); }
+
+
+    /// A signal released indicating the retry of work
+
+    default void retry () { emit ( Signal.RETRY ); }
+
+
+    /// A signal released indicating the scheduling of work
+
+    default void schedule () { emit ( Signal.SCHEDULE ); }
+
+
+    /// A signal received indicating the scheduling work
+
+    default void scheduled () { emit ( Signal.SCHEDULED ); }
+
+
+    /// A signal released indicating the start of work to be done
+
+    default void start () { emit ( Signal.START ); }
+
+
+    /// A signal received indicating the start of work to be done
+
+    default void started () { emit ( Signal.STARTED ); }
+
+
+    /// A signal released indicating the completion work
+
+    default void stop () { emit ( Signal.STOP ); }
+
+
+    /// A signal received indicating the completion work
+
+    default void stopped () { emit ( Signal.STOPPED ); }
+
+
+    /// Returns the subject associated with the underlying channel used by this service.
+    ///
+    /// @return The subject of the channel.
+
+    @NotNull
+    Subject subject ();
+
+
+    /// A signal received indicating successful completion of work
+
+    default void succeeded () { emit ( Signal.SUCCEEDED ); }
+
+
+    /// A signal released indicating successful completion of work
+
+    default void success () { emit ( Signal.SUCCESS ); }
+
+
+    /// A signal released indicating the suspension of work
+
+    default void suspend () { emit ( Signal.SUSPEND ); }
+
+
+    /// A signal received indicating the suspension of work
+
+    default void suspended () { emit ( Signal.SUSPENDED ); }
+
 
   }
 
@@ -381,6 +521,7 @@ public interface Services
 
 
     /// A signal received indicating the resumption of work
+
     RESUMED ( Sign.RESUME, RECEIPT ),
 
 

@@ -1,6 +1,4 @@
-/*
- * Copyright (c) 2025 William David Louth
- */
+// Copyright (c) 2025 William David Louth
 
 package io.humainary.modules.serventis.monitors.api;
 
@@ -48,6 +46,14 @@ public interface Monitors
       @NotNull Condition condition,
       @NotNull Confidence confidence
     );
+
+
+    /// Returns the subject associated with the underlying channel used by this service.
+    ///
+    /// @return The subject of the channel.
+
+    @NotNull
+    Subject subject ();
 
   }
 
