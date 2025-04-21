@@ -58,6 +58,7 @@
   <modules>
     <module>services</module>
     <module>monitors</module>
+    <module>reporters</module>
   </modules>
 
   <build>
