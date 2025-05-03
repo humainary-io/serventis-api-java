@@ -1,0 +1,189 @@
+// Copyright (c) 2025 William David Louth
+
+package io.humainary.modules.serventis.probes.api;
+
+import static io.humainary.substrates.api.Substrates.*;
+
+/// The `Probes` API provides a structured framework for monitoring and reporting
+/// communication outcomes in distributed systems. It enables precise observation
+/// of operations across client-server boundaries.
+///
+/// ## Key Concepts
+///
+/// This API is built around three core dimensions:
+/// - **Outcome**: What happened (success or failure)
+/// - **Origin**: Where it happened (client or server)
+/// - **Operation**: What activity was occurring (connect, send, receive, process)
+///
+/// By combining these dimensions, the API enables detailed diagnostics and monitoring
+/// of distributed communication patterns, allowing systems to detect, report, and
+/// respond to various conditions that may arise during network operations.
+///
+/// @since 1.0
+
+public interface Probes
+  extends Composer < Probes.Probe, Probes.Observation > {
+
+  /// An `Observation` is a record of a communication event, capturing:
+  /// - What happened (outcome)
+  /// - Where it happened (origin)
+  /// - What was happening (operation)
+  ///
+  /// Observations provide a structured way to describe and analyze the behavior
+  /// of distributed systems, enabling detailed monitoring and diagnostics.
+
+  @Provided
+  interface Observation {
+
+    /// Returns the type of operation being observed.
+    ///
+    /// The operation identifies what activity was occurring when the observation
+    /// was made, providing context about the communication phase.
+    ///
+    /// @return the type of operation (CONNECT, SEND, RECEIVE, or PROCESS) being observed
+
+    @NotNull
+    Operation operation ();
+
+
+    /// Returns the origin where the observation was made.
+    ///
+    /// The origin identifies the location within the distributed system
+    /// where the observation occurred, helping to pinpoint responsibility
+    /// and understand the communication flow.
+    ///
+    /// @return the origin (CLIENT or SERVER) where the observation was made
+
+    @NotNull
+    Origin origin ();
+
+
+    /// Returns the outcome of the observed operation.
+    ///
+    /// The outcome indicates whether the operation succeeded or failed,
+    /// providing the most fundamental assessment of the observation.
+    ///
+    /// @return the outcome (SUCCESS or FAILURE) of the observed operation
+
+    @NotNull
+    Outcome outcome ();
+
+  }
+
+
+  /// A `Probe` is an instrument that emits observations about communication operations.
+  /// It serves as the primary reporting mechanism within the Probes API.
+  ///
+  /// Probes can be attached to various components within a distributed system to monitor
+  /// and report on communication, health and behavior. Each probe emits observations that
+  /// capture the outcome, origin, and type of operation being performed.
+
+  @Provided
+  interface Probe
+    extends Pipe < Observation > {
+
+    /// Emits an observation.
+    ///
+    /// This method is useful when the observation has been created elsewhere.
+    ///
+    /// @param observation the complete observation to emit
+    /// @throws NullPointerException if observation is null
+
+    @Override
+    void emit (
+      @NotNull Observation observation
+    );
+
+
+    /// Emits an observation constructed from individual components.
+    ///
+    /// This method constructs an observation from the specified outcome, origin,
+    /// and operation, then emits it.
+    ///
+    /// @param outcome   the outcome of the operation (SUCCESS or FAILURE)
+    /// @param origin    the origin where the observation was made (CLIENT or SERVER)
+    /// @param operation the type of operation being observed (CONNECT, SEND, RECEIVE, or PROCESS)
+    /// @throws NullPointerException if any parameter is null
+
+    void emit (
+      @NotNull Outcome outcome,
+      @NotNull Origin origin,
+      @NotNull Operation operation
+    );
+
+  }
+
+
+  /// The `Outcome` enum represents the binary result of an observed operation.
+  ///
+  /// Each operation can either succeed as expected or fail in some manner.
+  /// This simple binary classification provides the foundation for more detailed
+  /// analysis when combined with origin and operation information.
+
+  enum Outcome {
+
+    /// The operation completed successfully as expected.
+    SUCCESS,
+
+    /// The operation failed to complete as expected.
+    FAILURE
+
+  }
+
+
+  /// The `Origin` enum identifies where in the distributed system an observation
+  /// was made.
+  ///
+  /// This spatial information helps locate the source of observations and,
+  /// in the case of failures, can help attribute responsibility appropriately.
+
+  enum Origin {
+    /// The observation was made at the client side of the communication.
+    ///
+    /// Client-side observations typically relate to connection initiation,
+    /// request sending, response receiving, and client-side processing.
+    CLIENT,
+
+    /// The observation was made at the server side of the communication.
+    ///
+    /// Server-side observations typically relate to connection acceptance,
+    /// request receiving, processing, and response sending.
+    SERVER
+  }
+
+
+  /// The `Operation` enum identifies the type of activity that was being
+  /// performed when the observation was made.
+  ///
+  /// This provides context about what phase of communication was occurring,
+  /// helping to construct a complete picture of the communication lifecycle.
+
+  enum Operation {
+
+    /// Establishing a connection or session between communicating parties.
+    ///
+    /// This operation represents the initial setup phase of communication,
+    /// such as TCP handshakes, authentication, or session establishment.
+    CONNECT,
+
+    /// Sending data across the communication channel.
+    ///
+    /// This operation represents the transmission of data from one system
+    /// to another, such as sending requests or commands.
+    SEND,
+
+    /// Receiving data from the communication channel.
+    ///
+    /// This operation represents the reception of data from another system,
+    /// such as receiving responses or events.
+    RECEIVE,
+
+    /// Processing data after receipt.
+    ///
+    /// This operation represents post-communication activities such as
+    /// parsing, validation, or application-level processing of received data.
+    PROCESS
+
+  }
+
+}
