@@ -75,12 +75,56 @@ public interface Probes
   /// It serves as the primary reporting mechanism within the Probes API.
   ///
   /// Probes can be attached to various components within a distributed system to monitor
-  /// and report on communication, health and behavior. Each probe emits observations that
-  /// capture the outcome, origin, and type of operation being performed.
+  /// and report on communication, health, and behavior.
+  /// Each probe emits observations that capture the outcome, origin, and type of operation being performed.
 
   @Provided
   interface Probe
     extends Pipe < Observation > {
+
+    /// Emits a CLIENT observation with the specified outcome and operation.
+    ///
+    /// This is a convenience method that automatically sets the origin to CLIENT.
+    ///
+    /// @param outcome   the outcome of the operation (SUCCESS or FAILURE)
+    /// @param operation the type of operation being observed (CONNECT, SEND, RECEIVE, or PROCESS)
+    /// @throws NullPointerException if any parameter is null
+
+    default void client (
+      @NotNull Outcome outcome,
+      @NotNull Operation operation
+    ) {
+
+      emit (
+        outcome,
+        Origin.CLIENT,
+        operation
+      );
+
+    }
+
+
+    /// Emits a CONNECT operation observation with the specified outcome and origin.
+    ///
+    /// This is a convenience method that automatically sets the operation to CONNECT.
+    ///
+    /// @param outcome the outcome of the operation (SUCCESS or FAILURE)
+    /// @param origin  the origin where the observation was made (CLIENT or SERVER)
+    /// @throws NullPointerException if any parameter is null
+
+    default void connect (
+      @NotNull Outcome outcome,
+      @NotNull Origin origin
+    ) {
+
+      emit (
+        outcome,
+        origin,
+        Operation.CONNECT
+      );
+
+    }
+
 
     /// Emits an observation.
     ///
@@ -111,14 +155,146 @@ public interface Probes
       @NotNull Operation operation
     );
 
+
+    /// Emits a FAILURE observation for the specified origin and operation.
+    ///
+    /// This is a convenience method that automatically sets the outcome to FAILURE.
+    ///
+    /// @param origin    the origin where the observation was made (CLIENT or SERVER)
+    /// @param operation the type of operation being observed (CONNECT, SEND, RECEIVE, or PROCESS)
+    /// @throws NullPointerException if any parameter is null
+
+    default void failure (
+      @NotNull Origin origin,
+      @NotNull Operation operation
+    ) {
+
+      emit (
+        Outcome.FAILURE,
+        origin,
+        operation
+      );
+
+    }
+
+
+    /// Emits a PROCESS operation observation with the specified outcome and origin.
+    ///
+    /// This is a convenience method that automatically sets the operation to PROCESS.
+    ///
+    /// @param outcome the outcome of the operation (SUCCESS or FAILURE)
+    /// @param origin  the origin where the observation was made (CLIENT or SERVER)
+    /// @throws NullPointerException if any parameter is null
+
+    default void process (
+      @NotNull Outcome outcome,
+      @NotNull Origin origin
+    ) {
+
+      emit (
+        outcome,
+        origin,
+        Operation.PROCESS
+      );
+
+    }
+
+
+    /// Emits a RECEIVE operation observation with the specified outcome and origin.
+    ///
+    /// This is a convenience method that automatically sets the operation to RECEIVE.
+    ///
+    /// @param outcome the outcome of the operation (SUCCESS or FAILURE)
+    /// @param origin  the origin where the observation was made (CLIENT or SERVER)
+    /// @throws NullPointerException if any parameter is null
+
+    default void receive (
+      @NotNull Outcome outcome,
+      @NotNull Origin origin
+    ) {
+
+      emit (
+        outcome,
+        origin,
+        Operation.RECEIVE
+      );
+
+    }
+
+
+    /// Emits a SEND operation observation with the specified outcome and origin.
+    ///
+    /// This is a convenience method that automatically sets the operation to SEND.
+    ///
+    /// @param outcome the outcome of the operation (SUCCESS or FAILURE)
+    /// @param origin  the origin where the observation was made (CLIENT or SERVER)
+    /// @throws NullPointerException if any parameter is null
+
+    default void send (
+      @NotNull Outcome outcome,
+      @NotNull Origin origin
+    ) {
+
+      emit (
+        outcome,
+        origin,
+        Operation.SEND
+      );
+
+    }
+
+
+    /// Emits a SERVER observation with the specified outcome and operation.
+    ///
+    /// This is a convenience method that automatically sets the origin to SERVER.
+    ///
+    /// @param outcome   the outcome of the operation (SUCCESS or FAILURE)
+    /// @param operation the type of operation being observed (CONNECT, SEND, RECEIVE, or PROCESS)
+    /// @throws NullPointerException if any parameter is null
+
+    default void server (
+      @NotNull Outcome outcome,
+      @NotNull Operation operation
+    ) {
+
+      emit (
+        outcome,
+        Origin.SERVER,
+        operation
+      );
+
+    }
+
+
+    /// Emits a SUCCESS observation for the specified origin and operation.
+    ///
+    /// This is a convenience method that automatically sets the outcome to SUCCESS.
+    ///
+    /// @param origin    the origin where the observation was made (CLIENT or SERVER)
+    /// @param operation the type of operation being observed (CONNECT, SEND, RECEIVE, or PROCESS)
+    /// @throws NullPointerException if any parameter is null
+
+    default void success (
+      @NotNull Origin origin,
+      @NotNull Operation operation
+    ) {
+
+      emit (
+        Outcome.SUCCESS,
+        origin,
+        operation
+      );
+
+    }
+
   }
 
 
-  /// The `Outcome` enum represents the binary result of an observed operation.
+  /// The `Outcome` enum represents the result of an observed operation.
   ///
   /// Each operation can either succeed as expected or fail in some manner.
-  /// This simple binary classification provides the foundation for more detailed
-  /// analysis when combined with origin and operation information.
+  /// This classification provides the foundation for more detailed analysis
+  /// when combined with origin and operation information.
 
   enum Outcome {
 
@@ -131,8 +307,7 @@ public interface Probes
   }
 
 
-  /// The `Origin` enum identifies where in the distributed system an observation
-  /// was made.
+  /// The `Origin` enum identifies where in the distributed system an observation was made.
   ///
   /// This spatial information helps locate the source of observations and,
   /// in the case of failures, can help attribute responsibility appropriately.

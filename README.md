@@ -31,7 +31,8 @@ Serventis consists of:
 
 - **Reporters API** – Defines the interface contract for reporting situational assessments.
 
-- **Probes API** – Provides a structured framework for monitoring and reporting communication outcomes in distributed systems.
+- **Probes API** – Provides a structured framework for monitoring and reporting communication
+  outcomes in distributed systems.
 
 By separating observation from interpretation, Serventis enables the integration of agents, machine
 learning models, and scorecards, allowing for context-aware reasoning and autonomous situational
