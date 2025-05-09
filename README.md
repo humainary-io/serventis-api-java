@@ -23,13 +23,20 @@ implementation.
 
 Serventis consists of:
 
-- **Monitors API** – Tracks the operational condition of services, assessing state transitions with
+- **Monitors API** – Defines the interface contract for monitoring the operational condition of
+  services, assessing state transitions with
   confidence levels.
 
-- **Services API** – Captures service-to-service interactions using structured signals and
-  orientations, based on signaling theory and social system regulation.
+- **Services API** – Defines the interface contract for capturing service-to-service interactions
+  using structured signals and orientations, based on signaling theory and social system regulation.
 
 - **Reporters API** – Defines the interface contract for reporting situational assessments.
+
+- **Probes API** – Defines the interface contract for monitoring and reporting communication
+  outcomes in distributed systems.
+
+- **Resources API** – Defines the interface contract for emitting signals describing interactions
+  with shared resources.
 
 By separating observation from interpretation, Serventis enables the integration of agents, machine
 learning models, and scorecards, allowing for context-aware reasoning and autonomous situational

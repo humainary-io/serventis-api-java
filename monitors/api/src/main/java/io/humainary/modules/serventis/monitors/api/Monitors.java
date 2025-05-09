@@ -42,7 +42,7 @@ public interface Monitors
     /// @param confidence the confidence of the status to be emitted
     /// @throws NullPointerException if either param is `null`
 
-    void emit (
+    void status (
       @NotNull Condition condition,
       @NotNull Confidence confidence
     );
