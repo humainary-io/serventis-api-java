@@ -38,6 +38,9 @@ Serventis consists of:
 - **Resources API** – Defines the interface contract for emitting signals describing interactions
   with shared resources.
 
+- **Queues API** – Defines the interface contract for emitting signals describing interactions
+  with queue-like systems.
+
 By separating observation from interpretation, Serventis enables the integration of agents, machine
 learning models, and scorecards, allowing for context-aware reasoning and autonomous situational
 awareness.

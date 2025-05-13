@@ -16,7 +16,7 @@
 
   <properties>
 
-    <revision>1.0.0-M10</revision>
+    <revision>1.0.0-M11</revision>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -61,6 +61,7 @@
     <module>reporters</module>
     <module>probes</module>
     <module>resources</module>
+    <module>queues</module>
   </modules>
 
   <build>
