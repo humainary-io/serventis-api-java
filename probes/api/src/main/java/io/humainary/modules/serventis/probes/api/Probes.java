@@ -104,6 +104,28 @@ public interface Probes
     }
 
 
+    /// Emits a CLOSE operation observation with the specified outcome and origin.
+    ///
+    /// This is a convenience method that automatically sets the operation to CLOSE.
+    ///
+    /// @param outcome the outcome of the operation (SUCCESS or FAILURE)
+    /// @param origin  the origin where the observation was made (CLIENT or SERVER)
+    /// @throws NullPointerException if any parameter is null
+
+    default void close (
+      @NotNull final Outcome outcome,
+      @NotNull final Origin origin
+    ) {
+
+      observation (
+        outcome,
+        origin,
+        Operation.CLOSE
+      );
+
+    }
+
+
     /// Emits a CONNECT operation observation with the specified outcome and origin.
     ///
     /// This is a convenience method that automatically sets the operation to CONNECT.
@@ -125,26 +147,6 @@ public interface Probes
 
     }
 
-    /// Emits a CLOSE operation observation with the specified outcome and origin.
-    ///
-    /// This is a convenience method that automatically sets the operation to CLOSE.
-    ///
-    /// @param outcome the outcome of the operation (SUCCESS or FAILURE)
-    /// @param origin  the origin where the observation was made (CLIENT or SERVER)
-    /// @throws NullPointerException if any parameter is null
-
-    default void close (
-      @NotNull final Outcome outcome,
-      @NotNull final Origin origin
-    ) {
-
-      observation (
-        outcome,
-        origin,
-        Operation.CLOSE
-      );
-
-    }
 
     /// Emits an observation.
     ///
