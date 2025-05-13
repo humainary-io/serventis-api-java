@@ -125,6 +125,26 @@ public interface Probes
 
     }
 
+    /// Emits a CLOSE operation observation with the specified outcome and origin.
+    ///
+    /// This is a convenience method that automatically sets the operation to CLOSE.
+    ///
+    /// @param outcome the outcome of the operation (SUCCESS or FAILURE)
+    /// @param origin  the origin where the observation was made (CLIENT or SERVER)
+    /// @throws NullPointerException if any parameter is null
+
+    default void close (
+      @NotNull final Outcome outcome,
+      @NotNull final Origin origin
+    ) {
+
+      observation (
+        outcome,
+        origin,
+        Operation.CLOSE
+      );
+
+    }
 
     /// Emits an observation.
     ///
@@ -357,7 +377,13 @@ public interface Probes
     ///
     /// This operation represents post-communication activities such as
     /// parsing, validation, or application-level processing of received data.
-    PROCESS
+    PROCESS,
+
+    /// Closing the connection or session between communicating parties.
+    ///
+    /// This operation represents final shutdown operations, flushes, or protocol-level
+    /// close signals.
+    CLOSE
 
   }
 
