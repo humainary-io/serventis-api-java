@@ -54,7 +54,7 @@ public interface Services
     default void discard () { emit ( Signal.DISCARD ); }
 
 
-    /// A signal received indicating the dropping work
+    /// A signal received indicating the dropping of work
 
     default void discarded () { emit ( Signal.DISCARDED ); }
 
@@ -312,7 +312,7 @@ public interface Services
     default void schedule () { emit ( Signal.SCHEDULE ); }
 
 
-    /// A signal received indicating the scheduling work
+    /// A signal received indicating the scheduling of work
 
     default void scheduled () { emit ( Signal.SCHEDULED ); }
 
@@ -327,12 +327,12 @@ public interface Services
     default void started () { emit ( Signal.STARTED ); }
 
 
-    /// A signal released indicating the completion work
+    /// A signal released indicating the completion of work
 
     default void stop () { emit ( Signal.STOP ); }
 
 
-    /// A signal received indicating the completion work
+    /// A signal received indicating the completion of work
 
     default void stopped () { emit ( Signal.STOPPED ); }
 

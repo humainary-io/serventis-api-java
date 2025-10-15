@@ -44,7 +44,7 @@ public interface Queues
     /// Emits a signal from this queue.
     ///
     /// @param signal The signal to emit
-    /// @throws NullPointerException if the signal param is `null``
+    /// @throws NullPointerException if the signal param is `null`
 
     @Override
     void emit (
@@ -66,13 +66,15 @@ public interface Queues
     /// Emits an overflow signal with the specified number of units from this queue.
     ///
     /// @param units The number of units involved in the overflow condition
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void overflow (
       final long units
     ) {
 
       signal (
-        Sign.OVERFLOW
+        Sign.OVERFLOW,
+        units
       );
 
     }
@@ -92,13 +94,15 @@ public interface Queues
     /// Emits a put signal with the specified number of units from this queue.
     ///
     /// @param units The number of units being put into the queue
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void put (
       final long units
     ) {
 
       signal (
-        Sign.PUT
+        Sign.PUT,
+        units
       );
 
     }
@@ -108,7 +112,8 @@ public interface Queues
     ///
     /// @param sign  The sign representing the type of queue interaction
     /// @param units The number of queue units involved in the interaction
-    /// @throws NullPointerException if the sign param is `null`
+    /// @throws NullPointerException     if the sign param is `null`
+    /// @throws IllegalArgumentException if units is less than 1
 
     void signal (
       @NotNull final Sign sign,
@@ -149,13 +154,15 @@ public interface Queues
     /// Emits a take signal with the specified number of units from this queue.
     ///
     /// @param units The number of units being taken from the queue
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void take (
       final long units
     ) {
 
       signal (
-        Sign.TAKE
+        Sign.TAKE,
+        units
       );
 
     }
@@ -175,13 +182,15 @@ public interface Queues
     /// Emits an underflow signal with the specified number of units from this queue.
     ///
     /// @param units The number of units involved in the underflow condition
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void underflow (
       final long units
     ) {
 
       signal (
-        Sign.UNDERFLOW
+        Sign.UNDERFLOW,
+        units
       );
 
     }
