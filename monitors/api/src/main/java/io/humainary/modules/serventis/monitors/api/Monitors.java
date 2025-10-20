@@ -2,6 +2,8 @@
 
 package io.humainary.modules.serventis.monitors.api;
 
+import io.humainary.substrates.api.Substrates;
+
 import static io.humainary.substrates.api.Substrates.*;
 
 
@@ -53,7 +55,7 @@ public interface Monitors
     /// @return The subject of the channel.
 
     @NotNull
-    Subject subject ();
+    Subject < Substrates.Channel < Monitors.Status > > subject ();
 
   }
 

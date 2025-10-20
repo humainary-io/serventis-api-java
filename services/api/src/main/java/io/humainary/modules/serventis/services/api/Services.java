@@ -26,7 +26,7 @@ public interface Services
   @Provided
   interface Service
     extends Pipe < Signal >,
-            Substrate {
+            Substrate < Channel < Signal > > {
 
 
     /// A signal released indicating the request (call) for work to be done (executed)
@@ -342,7 +342,7 @@ public interface Services
     /// @return The subject of the channel.
 
     @NotNull
-    Subject subject ();
+    Subject < Channel < Signal > > subject ();
 
 
     /// A signal received indicating successful completion of work
