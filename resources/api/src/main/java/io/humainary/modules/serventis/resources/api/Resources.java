@@ -36,6 +36,7 @@ public interface Resources
     /// Represents a blocking or wait-based request for multiple units from the resource.
     ///
     /// @param units The number of resource units being requested
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void acquire (
       final long units
@@ -67,6 +68,7 @@ public interface Resources
     /// Represents a non-blocking request for multiple units from the resource.
     ///
     /// @param units The number of resource units being requested
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void attempt (
       final long units
@@ -98,6 +100,7 @@ public interface Resources
     /// Represents the denial of a request for multiple units from the resource (e.g., due to lack of capacity).
     ///
     /// @param units The number of resource units being denied
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void deny (
       final long units
@@ -139,6 +142,7 @@ public interface Resources
     /// Represents the granting of a request for multiple units from this resource.
     ///
     /// @param units The number of resource units being granted by this resource
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void grant (
       final long units
@@ -170,6 +174,7 @@ public interface Resources
     /// Represents the returning of a number of units previously granted by this resource.
     ///
     /// @param units The number of resource units being returned to this resource
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void release (
       final long units
@@ -187,7 +192,8 @@ public interface Resources
     ///
     /// @param sign  The sign representing the type of resource interaction
     /// @param units The number of resource units involved in the interaction
-    /// @throws NullPointerException if the sign param is `null`
+    /// @throws NullPointerException     if the sign param is `null`
+    /// @throws IllegalArgumentException if units is less than 1
 
     void signal (
       @NotNull final Sign sign,
@@ -232,6 +238,7 @@ public interface Resources
     /// Represents the timing out of a request to the resource.
     ///
     /// @param units The number of resource units that were requested from this resource
+    /// @throws IllegalArgumentException if units is less than 1
 
     default void timeout (
       final long units

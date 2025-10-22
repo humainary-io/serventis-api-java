@@ -25,8 +25,7 @@ public interface Services
 
   @Provided
   interface Service
-    extends Pipe < Signal >,
-            Substrate < Channel < Signal > > {
+    extends Pipe < Signal > {
 
 
     /// A signal released indicating the request (call) for work to be done (executed)
@@ -335,14 +334,6 @@ public interface Services
     /// A signal received indicating the completion of work
 
     default void stopped () { emit ( Signal.STOPPED ); }
-
-
-    /// Returns the subject associated with the underlying channel used by this service.
-    ///
-    /// @return The subject of the channel.
-
-    @NotNull
-    Subject < Channel < Signal > > subject ();
 
 
     /// A signal received indicating successful completion of work
