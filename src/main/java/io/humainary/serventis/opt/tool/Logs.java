@@ -1,0 +1,406 @@
+// Copyright (c) 2025 William David Louth
+package io.humainary.serventis.opt.tool;
+
+import io.humainary.serventis.api.Serventis;
+import io.humainary.serventis.sdk.SignMap;
+import io.humainary.serventis.sdk.SignSet;
+import io.humainary.serventis.sdk.Statuses;
+import io.humainary.specs.api.Specs.SpecDoc;
+import io.humainary.specs.api.Specs.SpecRef;
+import io.humainary.substrates.api.Substrates.Utility;
+
+import static io.humainary.serventis.api.Serventis.Kind.OUTCOME;
+import static io.humainary.serventis.opt.tool.Logs.Sign.*;
+import static io.humainary.serventis.sdk.Statuses.Sign.*;
+import static java.util.Objects.requireNonNull;
+
+/// # Logs API
+///
+/// The `Logs` API provides a structured framework for observing logging activity from the
+/// client perspective (application code using loggers). It enables emission of semantic signals
+/// representing log levels, making logging behavior observable for system health analysis,
+/// error pattern detection, and diagnostic volume tracking.
+///
+/// ## Purpose
+///
+/// This API enables systems to emit **semantic health signals** through logging activity,
+/// capturing not the log content but the fact that logging occurred at specific severity levels.
+/// By modeling log levels as observable signs, it enables pattern recognition, status translation,
+/// and situational awareness based on logging patterns.
+///
+/// ## Design Philosophy
+///
+/// Styled after `java.util.logging` (JUL) with simplified, industry-standard levels. The API
+/// captures the severity application code (the client) assigns to a condition it observed. Because
+/// selecting a severity is a judgment rather than a direct observation, `Logs` is a *derived*
+/// vocabulary under `serventis-api-spec/SPEC.md` §8.1.1: semantic conditions that
+/// warrant logging at specific severity levels.
+///
+/// ## Important: Observability vs Content
+///
+/// This API is for **observing logging activity**, not capturing log content or implementing
+/// logging frameworks. When your application logs messages (via JUL, slf4j, log4j, etc.),
+/// use this API to emit corresponding observability signals about the logging activity itself.
+/// Observer agents can then reason about error rates, warning patterns, and log volume without
+/// coupling to log message content or specific logging implementations.
+///
+/// **Example**: When your application logs an error, you would call `log.severe()` to emit
+/// a signal. The signal enables meta-observability: observing the logging instrumentation
+/// itself to understand system health through logging patterns.
+///
+/// ## Key Concepts
+///
+/// - **Log**: A named subject that emits signs describing logging activity
+/// - **Sign**: Log level representing semantic severity: `SEVERE`, `WARNING`, `INFO`, `DEBUG`
+/// - **Client Perspective**: Application code that uses loggers to report conditions
+///
+/// ## Signs and Semantics
+///
+/// | Sign      | Description                                      | Maps to            |
+/// |-----------|--------------------------------------------------|--------------------|
+/// | `SEVERE`  | Serious failures/errors requiring attention      | JUL SEVERE, slf4j ERROR |
+/// | `WARNING` | Potential problems/concerns worth noting         | JUL WARNING, slf4j WARN |
+/// | `INFO`    | Informational messages about normal operation    | JUL INFO, slf4j INFO |
+/// | `DEBUG`   | Diagnostic/tracing output for troubleshooting    | JUL FINE/FINER/FINEST, slf4j DEBUG/TRACE |
+///
+/// ## Mapping from java.util.logging
+///
+/// | JUL Level | Serventis Sign | Rationale |
+/// |-----------|----------------|-----------|
+/// | SEVERE    | SEVERE         | Direct mapping |
+/// | WARNING   | WARNING        | Direct mapping |
+/// | INFO      | INFO           | Direct mapping |
+/// | CONFIG    | INFO           | Configuration is informational |
+/// | FINE      | DEBUG          | Basic diagnostic tracing |
+/// | FINER     | DEBUG          | Detailed tracing (merged) |
+/// | FINEST    | DEBUG          | Finest tracing (merged) |
+///
+/// ## Mapping from slf4j/logback
+///
+/// | slf4j Level | Serventis Sign | Rationale |
+/// |-------------|----------------|-----------|
+/// | ERROR       | SEVERE         | Errors are severe |
+/// | WARN        | WARNING        | Direct mapping |
+/// | INFO        | INFO           | Direct mapping |
+/// | DEBUG       | DEBUG          | Direct mapping |
+/// | TRACE       | DEBUG          | Merged with debug |
+///
+/// ## Use Cases
+///
+/// - Error rate tracking and alerting
+/// - Warning pattern detection (crescendos indicating degradation)
+/// - Log volume analysis (spikes, silence detection)
+/// - System health assessment through logging patterns
+/// - Debug overhead monitoring (excessive diagnostic output)
+///
+/// ## Relationship to Other APIs
+///
+/// `Logs` signals correlate with other Serventis APIs:
+///
+/// - **Services API**: Service FAIL signals often correlate with Log SEVERE signals
+/// - **Tasks API**: Task FAIL signals typically generate Log SEVERE signals
+/// - **Processes API**: Process CRASH signals produce Log SEVERE signals
+/// - **Statuses API**: Log error patterns inform Status conditions (many SEVERE → DEGRADED)
+/// - **Situations API**: Log patterns influence Situation assessments (SEVERE spike → CRITICAL)
+///
+///
+/// ## Performance Considerations
+///
+/// See [io.humainary.serventis.api.Serventis.Signer] for observation reuse and the
+/// limits of performance guarantees. Measure the provider and pipeline for the intended workload.
+///
+/// ## Semiotic Ascent: Logs → Status → Situation
+///
+/// Log signs translate upward into universal languages:
+///
+/// ### Logs → Status Translation
+/// - High SEVERE rate → DEFECTIVE status (system experiencing failures)
+/// - SEVERE spike → DEFECTIVE status (sudden failure cascade)
+/// - High WARNING rate → DIVERGING status (accumulating concerns)
+/// - WARNING crescendo → DIVERGING status (degradation in progress)
+/// - High DEBUG volume → ERRATIC status (excessive diagnostic output)
+/// - No INFO for period → DOWN status (system not processing)
+///
+/// ### Status → Situation Assessment
+/// - DEFECTIVE (SEVERE spike) → CRITICAL situation (service failing)
+/// - DIVERGING (crescendo) → WARNING situation (approaching limits)
+/// - ERRATIC (DEBUG flood) → WARNING situation (diagnostic overhead)
+///
+/// This hierarchical meaning-making enables cross-domain reasoning: observers understand
+/// logging patterns' impact on service reliability and system capacity without needing
+/// to parse log content or understand application-specific semantics.
+///
+/// @author William David Louth
+/// @since 1.0
+
+@Utility
+@SpecDoc ( "https://github.com/humainary-io/serventis-api-spec/blob/3.1.2/SPEC.md" )
+@SpecRef ( {"8.2", "registry:logs"} )
+public final class Logs
+  implements Serventis {
+
+  /// The sign set of this API — the captured [Sign] constants from which the canonical
+  /// [#STATUS] and [#KIND] interpretations, and any caller-derived sign maps, are mapped.
+
+  @SpecRef ( "4.5" )
+  public static final SignSet < Sign > SIGNS =
+    SignSet.of (
+      Sign.class
+    );
+
+  /// Canonical sign-to-status translation for logs — the default *immediate interpretant* of the
+  /// upward ascent (compose to override; see [SignMap]). The severity levels grade directly: routine
+  /// `INFO` reads healthy, `WARNING` degraded, `SEVERE` defective; `DEBUG` (diagnostic volume) abstains.
+  /// The severity *mix* — healthy when INFO dominates, failing when SEVERE does — emerges from the
+  /// Scorecard's plurality. Finer patterns the prose lists (SEVERE spike, WARNING crescendo, INFO
+  /// silence → DOWN) are rate/absence readings for the pattern operator, not this per-sign map.
+  ///
+  /// Exhaustive without a `default`: a new [Sign] is a compile error here until its reading is decided.
+
+  public static final SignMap < Sign, Statuses.Sign > STATUS =
+    SIGNS.map (
+      sign -> switch ( sign ) {
+        case INFO -> STABLE;
+        case WARNING -> DEGRADED;
+        case SEVERE -> DEFECTIVE;
+        case DEBUG -> null;
+      }
+    );
+
+  /// Canonical sign-to-kind classification for logs — all four severities are [Kind#OUTCOME]: a log
+  /// statement reports an observed condition (`INFO`/`WARNING`/`SEVERE`/`DEBUG`), not an act performed
+  /// toward a result. Logs has no operations of its own. Exhaustive without a `default`. See [Kind].
+
+  public static final SignMap < Sign, Kind > KIND =
+    SIGNS.map (
+      sign -> switch ( sign ) {
+        case INFO, WARNING, SEVERE, DEBUG -> OUTCOME;
+      }
+    );
+
+  private Logs () { }
+
+  /// Creates a Log instrument wrapping the specified pipe.
+  ///
+  /// @param pipe the pipe from which to create the log
+  /// @return a new Log instrument for the specified pipe
+  /// @throws NullPointerException if the pipe parameter is `null`
+
+  @SpecRef ( "6.4" )
+  @New
+  @NotNull
+  public static Log of (
+    @NotNull final Pipe < ? super Sign > pipe
+  ) {
+
+    return
+      new Log (
+        requireNonNull ( pipe )
+      );
+
+  }
+
+  /// Returns a pool that creates cached Log instruments from a conduit.
+  ///
+  /// Within the returned pool, repeated lookup of the same name returns the same instrument,
+  /// created on first lookup. Separate pools have separate identity guarantees.
+  ///
+  /// @param conduit the conduit providing sign pipes
+  /// @return a pool that creates Log instruments
+  /// @throws NullPointerException if the conduit parameter is `null`
+
+  @SpecRef ( {"6.4", "substrates:10.1"} )
+  @New
+  @NotNull
+  public static Pool < Log > pool (
+    @NotNull final Conduit < Sign > conduit
+  ) {
+
+    return
+      conduit.pool (
+        Logs::of
+      );
+
+  }
+
+  /// A [Sign] represents the severity level of a logging event.
+  ///
+  /// Signs correspond to standard logging levels used across frameworks, enabling
+  /// observation of logging activity at different semantic severities. These signs
+  /// form the foundation for pattern recognition, error rate tracking, and system
+  /// health assessment through logging behavior.
+  ///
+  /// ## Sign Semantics
+  ///
+  /// Signs are ordered by severity from most severe (SEVERE) to least severe (DEBUG):
+  ///
+  /// - **SEVERE**: Serious failures requiring immediate attention
+  /// - **WARNING**: Potential problems worth noting
+  /// - **INFO**: Normal operational milestones
+  /// - **DEBUG**: Diagnostic information for troubleshooting
+
+  @SpecRef ( {"4.2", "registry:logs"} )
+  public enum Sign
+    implements Serventis.Sign {
+
+    /// Indicates a serious failure or error condition.
+    ///
+    /// SEVERE represents failures, exceptions, and error conditions that require
+    /// attention. High SEVERE rates indicate system instability, bugs, or infrastructure
+    /// problems. SEVERE signs translate to CRITICAL or DEGRADED status depending on
+    /// frequency and pattern.
+    ///
+    /// **Typical usage**: Unhandled exceptions, infrastructure failures, critical errors
+    ///
+    /// **Pattern analysis**: SEVERE spike → CRITICAL, sustained SEVERE → DEGRADED
+
+    SEVERE,
+
+    /// Indicates a potential problem or concerning condition.
+    ///
+    /// WARNING represents conditions that are concerning but not immediately critical.
+    /// Warnings often indicate approaching capacity limits, degrading performance, or
+    /// recoverable errors. High WARNING rates or crescendo patterns indicate system
+    /// degradation in progress.
+    ///
+    /// **Typical usage**: Retries, fallbacks, approaching limits, validation issues
+    ///
+    /// **Pattern analysis**: WARNING crescendo → WARNING status, many WARNING → degrading
+
+    WARNING,
+
+    /// Indicates normal operational information.
+    ///
+    /// INFO represents significant operational milestones and normal system activity.
+    /// INFO signs provide baseline context and indicate healthy system operation.
+    /// Absence of INFO may indicate system stalling or processing cessation.
+    ///
+    /// **Typical usage**: Request completion, transaction success, lifecycle events
+    ///
+    /// **Pattern analysis**: Regular INFO → healthy, no INFO → DOWN status
+
+    INFO,
+
+    /// Indicates diagnostic or tracing information.
+    ///
+    /// DEBUG represents detailed diagnostic output used for troubleshooting. High DEBUG
+    /// volume in production may indicate configuration issues or excessive diagnostic
+    /// overhead. DEBUG is typically filtered in production environments.
+    ///
+    /// **Typical usage**: Variable values, execution flow, detailed state information
+    ///
+    /// **Pattern analysis**: High DEBUG volume → ERRATIC status (performance impact)
+
+    DEBUG
+
+  }
+
+  /// The `Log` class represents a named, observable log from which signs are emitted.
+  ///
+  /// A log is an observable entity that emits signs corresponding to logging activity
+  /// at different severity levels. Log signs make logging behavior observable, enabling
+  /// error rate tracking, warning pattern detection, and system health assessment
+  /// through logging patterns.
+  ///
+  /// ## Usage
+  ///
+  /// Use domain-specific methods for all logging events:
+  ///
+  /// ```java
+  /// // Normal operation
+  /// log.info();
+  ///
+  /// // Concerning condition
+  /// log.warning();
+  ///
+  /// // Serious failure
+  /// log.severe();
+  ///
+  /// // Diagnostic information
+  /// log.debug();
+  /// ```
+
+  @SpecRef ( {"6.1", "6.3", "6.5", "substrates:6.1"} )
+  @Queued
+  @Provided
+  public static final class Log
+    implements Signer < Sign > {
+
+    private final Pipe < ? super Sign > pipe;
+
+    private Log (
+      final Pipe < ? super Sign > pipe
+    ) {
+
+      this.pipe =
+        pipe;
+
+    }
+
+    /// Emits a `DEBUG` sign from this log.
+    ///
+    /// Represents diagnostic or tracing information being logged.
+
+    public void debug () {
+
+      pipe.emit (
+        DEBUG
+      );
+
+    }
+
+    /// Emits an `INFO` sign from this log.
+    ///
+    /// Represents informational message about normal operation.
+
+    public void info () {
+
+      pipe.emit (
+        INFO
+      );
+
+    }
+
+    /// Emits a `SEVERE` sign from this log.
+    ///
+    /// Represents serious failure or error condition.
+
+    public void severe () {
+
+      pipe.emit (
+        SEVERE
+      );
+
+    }
+
+    /// Signs a log event.
+    ///
+    /// @param sign the sign to make
+
+    @SpecRef ( "6.1" )
+    @Override
+    public void sign (
+      @NotNull final Sign sign
+    ) {
+
+      pipe.emit (
+        sign
+      );
+
+    }
+
+    /// Emits a `WARNING` sign from this log.
+    ///
+    /// Represents potential problem or concerning condition.
+
+    public void warning () {
+
+      pipe.emit (
+        WARNING
+      );
+
+    }
+
+  }
+
+}
