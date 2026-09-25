@@ -1,0 +1,523 @@
+// Copyright (c) 2025 William David Louth
+package io.humainary.serventis.opt.data;
+
+import io.humainary.serventis.api.Serventis;
+import io.humainary.serventis.sdk.SignMap;
+import io.humainary.serventis.sdk.SignSet;
+import io.humainary.serventis.sdk.Statuses;
+import io.humainary.specs.api.Specs.SpecDoc;
+import io.humainary.specs.api.Specs.SpecRef;
+import io.humainary.substrates.api.Substrates.Utility;
+
+import static io.humainary.serventis.api.Serventis.Kind.OPERATION;
+import static io.humainary.serventis.api.Serventis.Kind.OUTCOME;
+import static io.humainary.serventis.opt.data.Stacks.Sign.*;
+import static io.humainary.serventis.sdk.Statuses.Sign.DEGRADED;
+import static io.humainary.serventis.sdk.Statuses.Sign.STABLE;
+import static java.util.Objects.requireNonNull;
+
+/// # Stacks API
+///
+/// The `Stacks` API provides a structured and minimal interface for observing interactions
+/// with stack-like systems. It enables systems to emit **semantic signals** representing
+/// key stack operations such as push, pop, and boundary violations.
+///
+/// ## Purpose
+///
+/// This API is designed to support **observability and reasoning** in systems that use
+/// stacks as control flow, backtracking, or buffer mechanisms. By modeling stack interactions
+/// as composable signals, it enables introspection of depth patterns, recursion behavior,
+/// and capacity utilization without coupling to specific implementation details.
+///
+/// ## Important: Reporting vs Implementation
+///
+/// This API is for **reporting stack operation semantics**, not implementing stacks.
+/// If you have an actual stack implementation (call stack monitoring, undo buffer, parser
+/// state stack, etc.), use this API to emit observability signals about operations performed
+/// on it. Observer agents can then reason about depth patterns, overflow risks, and
+/// underflow conditions without coupling to your implementation details.
+///
+/// **Example**: When your parser pushes a new context onto the state stack, you would call
+/// `stack.push()` to emit a signal. If the stack is full and rejects the operation,
+/// call `stack.overflow()`. The signals enable meta-observability: observing the observability
+/// instrumentation itself to understand stack behavior and control flow dynamics.
+///
+/// ## Key Concepts
+///
+/// - **Stack**: A named subject that emits signs describing operations performed against it
+/// - **Sign**: An enumeration of distinct interaction types: `PUSH`, `POP`, `OVERFLOW`, `UNDERFLOW`
+/// - **LIFO Ordering**: Last-In-First-Out semantics (distinguishes from Queues FIFO)
+///
+/// ## Signs and Semantics
+///
+/// | Sign        | Description                                               |
+/// |-------------|-----------------------------------------------------------|
+/// | `PUSH`      | An item was added to the stack (top)                      |
+/// | `POP`       | An item was removed from the stack (top)                  |
+/// | `OVERFLOW`  | A `PUSH` failed due to capacity                           |
+/// | `UNDERFLOW` | A `POP` failed due to emptiness                           |
+///
+/// ## Stacks vs Queues
+///
+/// While structurally similar (both have symmetric operations and boundary violations),
+/// Stacks and Queues represent fundamentally different ordering semantics:
+///
+/// | Aspect | Stacks (LIFO) | Queues (FIFO) |
+/// |--------|---------------|---------------|
+/// | **Ordering** | Last-In-First-Out | First-In-First-Out |
+/// | **Operations** | PUSH/POP | ENQUEUE/DEQUEUE |
+/// | **Semantics** | Recursion, backtracking, nesting | Flow control, buffering, ordering |
+/// | **Depth** | Grows with nesting | Grows with backpressure |
+///
+/// **When to use Stacks API**: Call stacks, undo buffers, parser states, backtracking algorithms
+/// **When to use Queues API**: Work queues, message buffers, pipeline stages, producer-consumer
+///
+/// ## Use Cases
+///
+/// - **Call Stack Monitoring**: Tracking recursion depth, detecting stack overflow risks
+/// - **Undo/Redo Buffers**: Observing undo stack operations in editors, applications
+/// - **Parser State Stacks**: Monitoring bracket matching, expression evaluation depth
+/// - **Backtracking Algorithms**: Observing search state stack in constraint solvers
+/// - **Thread Pool Work Stealing**: Work-stealing deques used as stacks
+/// - **Expression Evaluation**: RPN calculator stacks, operator precedence parsing
+///
+/// ## Stack Patterns
+///
+/// ### Call Stack Depth Monitoring
+///
+/// ```java
+/// var stack = circuit.conduit(Sign.class)
+///   .pool(Stacks::of).get(cortex.name("thread.callstack"));
+///
+/// // Method entry
+/// public void recursiveMethod(int depth) {
+///   stack.push();    // Call frame pushed
+///
+///   if (depth > MAX_DEPTH) {
+///     stack.overflow();  // Stack too deep
+///     throw new StackOverflowError();
+///   }
+///
+///   recursiveMethod(depth + 1);
+///
+///   stack.pop();     // Call frame popped (return)
+/// }
+/// ```
+///
+/// ### Undo/Redo Buffer
+///
+/// ```java
+/// var undoStack = circuit.conduit(Sign.class)
+///   .pool(Stacks::of).get(cortex.name("editor.undo"));
+/// var redoStack = circuit.conduit(Sign.class)
+///   .pool(Stacks::of).get(cortex.name("editor.redo"));
+///
+/// // User performs action
+/// public void performAction(Action action) {
+///   if (undoStack.size() == MAX_UNDO) {
+///     undoStack.overflow();  // Undo buffer full
+///     undoStack.removeOldest();
+///   }
+///   undoStack.push(action);
+///   undoStack.push();  // Signal emitted
+///
+///   // Clear redo stack
+///   while (!redoStack.isEmpty()) {
+///     redoStack.pop();
+///   }
+/// }
+///
+/// // User undoes
+/// public void undo() {
+///   if (undoStack.isEmpty()) {
+///     undoStack.underflow();  // Nothing to undo
+///     return;
+///   }
+///   Action action = undoStack.pop();
+///   undoStack.pop();  // Signal emitted
+///
+///   action.undo();
+///   redoStack.push(action);
+///   redoStack.push();  // Signal emitted
+/// }
+/// ```
+///
+/// ### Parser State Stack (Bracket Matching)
+///
+/// ```java
+/// var stack = circuit.conduit(Sign.class)
+///   .pool(Stacks::of).get(cortex.name("parser.brackets"));
+///
+/// // Parse expression with bracket matching
+/// public void parseExpression(String expr) {
+///   for (char c : expr.toCharArray()) {
+///     if (isOpenBracket(c)) {
+///       stack.push();    // Open bracket pushed
+///       bracketStack.push(c);
+///     } else if (isCloseBracket(c)) {
+///       if (bracketStack.isEmpty()) {
+///         stack.underflow();  // Unmatched close bracket
+///         throw new ParseException("Unmatched bracket");
+///       }
+///       stack.pop();     // Matched bracket popped
+///       bracketStack.pop();
+///     }
+///   }
+/// }
+/// ```
+///
+/// ### RPN Calculator Stack
+///
+/// ```java
+/// var stack = circuit.conduit(Sign.class)
+///   .pool(Stacks::of).get(cortex.name("calculator.operands"));
+///
+/// // Reverse Polish Notation evaluation
+/// public double evaluateRPN(String[] tokens) {
+///   for (String token : tokens) {
+///     if (isNumber(token)) {
+///       operandStack.push(parseDouble(token));
+///       stack.push();    // Operand pushed
+///     } else {
+///       if (operandStack.size() < 2) {
+///         stack.underflow();  // Not enough operands
+///         throw new IllegalStateException();
+///       }
+///       double b = operandStack.pop();
+///       stack.pop();
+///       double a = operandStack.pop();
+///       stack.pop();
+///
+///       operandStack.push(apply(token, a, b));
+///       stack.push();    // Result pushed
+///     }
+///   }
+///   return operandStack.pop();
+/// }
+/// ```
+///
+/// ### Work-Stealing Deque (Stack Mode)
+///
+/// ```java
+/// var stack = circuit.conduit(Sign.class)
+///   .pool(Stacks::of).get(cortex.name("worker.localqueue"));
+///
+/// // Worker pushes tasks locally (LIFO for cache locality)
+/// public void pushTask(Task task) {
+///   if (localQueue.size() == capacity) {
+///     stack.overflow();  // Local queue full
+///     globalQueue.offer(task);
+///     return;
+///   }
+///   localQueue.push(task);
+///   stack.push();    // Task added to local stack
+/// }
+///
+/// // Worker pops own tasks (LIFO)
+/// public Task popTask() {
+///   if (localQueue.isEmpty()) {
+///     stack.underflow();  // No local work
+///     return stealFromOthers();
+///   }
+///   Task task = localQueue.pop();
+///   stack.pop();     // Popped own task
+///   return task;
+/// }
+/// ```
+///
+/// ### Backtracking Search Stack
+///
+/// ```java
+/// var stack = circuit.conduit(Sign.class)
+///   .pool(Stacks::of).get(cortex.name("search.states"));
+///
+/// // Depth-first search with backtracking
+/// public boolean dfs(State initial) {
+///   stateStack.push(initial);
+///   stack.push();
+///
+///   while (!stateStack.isEmpty()) {
+///     State current = stateStack.pop();
+///     stack.pop();
+///
+///     if (current.isGoal()) return true;
+///
+///     for (State next : current.successors()) {
+///       stateStack.push(next);
+///       stack.push();  // New search state
+///     }
+///   }
+///
+///   stack.underflow();  // Search exhausted
+///   return false;
+/// }
+/// ```
+///
+/// ## Relationship to Other APIs
+///
+/// `Stacks` signals can inform higher-level abstractions:
+///
+/// - **Queues API**: Complementary buffer abstraction (LIFO vs FIFO ordering)
+/// - **Processes API**: Call stack depth relates to process execution depth
+/// - **Tasks API**: Task execution stack for nested task spawning
+/// - **Statuses API**: Stack overflow patterns may indicate DEGRADED or RECURSIVE conditions
+/// - **Gauges API**: Stack depth can be modeled as a gauge (PUSH=increment, POP=decrement)
+///
+/// ## Performance Considerations
+///
+/// See [io.humainary.serventis.api.Serventis.Signer] for observation reuse and the
+/// limits of performance guarantees. Measure the provider and pipeline for the intended workload.
+///
+/// ## Semiotic Ascent: Stacks → Status → Situation
+///
+/// Stack signs translate upward into universal languages:
+///
+/// ### Stacks → Status Translation
+///
+/// Pattern-based translation through subscriber observation:
+///
+/// | Stack Pattern              | Status      | Rationale                              |
+/// |----------------------------|-------------|----------------------------------------|
+/// | High PUSH without POP      | DIVERGING   | Stack depth increasing (recursion)     |
+/// | Many OVERFLOW              | DEGRADED    | Bounded stack at capacity              |
+/// | Many UNDERFLOW             | DEGRADED    | Excessive pops on empty stack          |
+/// | Rapid PUSH/POP             | ERRATIC     | High turnover, shallow operations      |
+/// | Balanced PUSH/POP          | STABLE      | Healthy stack usage                    |
+/// | PUSH rate increasing       | DIVERGING   | Unbounded recursion risk               |
+///
+/// ### Status → Situation Assessment
+///
+/// | Status Pattern       | Situation   | Example                                    |
+/// |----------------------|-------------|--------------------------------------------|
+/// | DIVERGING (sustained)| WARNING     | Deep call stack, overflow risk             |
+/// | DEGRADED (bounded)   | WARNING     | Stack buffer too small                     |
+/// | ERRATIC (rapid)      | WARNING     | Excessive push/pop, cache thrashing        |
+/// | DIVERGING (growth)   | CRITICAL    | Unbounded recursion, memory leak           |
+///
+/// This hierarchical meaning-making enables cross-domain reasoning: observers understand
+/// stack behavior and control flow dynamics without needing to understand stack implementation
+/// details or specific algorithms.
+///
+/// @author William David Louth
+/// @since 1.0
+
+@Utility
+@SpecDoc ( "https://github.com/humainary-io/serventis-api-spec/blob/3.6.0/SPEC.md" )
+@SpecRef ( {"8.2", "registry:stacks"} )
+public final class Stacks
+  implements Serventis {
+
+  /// The sign set of this API — the captured [Sign] constants from which the canonical
+  /// [#STATUS] and [#KIND] interpretations, and any caller-derived sign maps, are mapped.
+
+  @SpecRef ( "4.5" )
+  public static final SignSet < Sign > SIGNS =
+    SignSet.of (
+      Sign.class
+    );
+
+  /// Canonical sign-to-status translation for stacks — the default *immediate interpretant* of the
+  /// upward ascent (compose to override; see [SignMap]). An accepted push reads healthy, the way a
+  /// resource grant does; a push refused at capacity reads degraded. `POP` abstains, and so does
+  /// `UNDERFLOW`: popping an empty stack is normal control flow, not a fault. The push/overflow
+  /// *ratio* emerges from the Scorecard's plurality.
+  ///
+  /// Exhaustive without a `default`: a new [Sign] is a compile error here until its reading is decided.
+
+  public static final SignMap < Sign, Statuses.Sign > STATUS =
+    SIGNS.map (
+      sign -> switch ( sign ) {
+        case PUSH -> STABLE;
+        case OVERFLOW -> DEGRADED;
+        case POP, UNDERFLOW -> null;
+      }
+    );
+
+  /// Canonical sign-to-kind classification for stacks — each [Sign] tagged [Kind#OPERATION] or
+  /// [Kind#OUTCOME]: push and pop are operations; the overflow/underflow boundary results are
+  /// outcomes. `PUSH` is an `OPERATION` though [#STATUS] reads it `STABLE` (see [Kind]). Exhaustive
+  /// without a `default`.
+
+  public static final SignMap < Sign, Kind > KIND =
+    SIGNS.map (
+      sign -> switch ( sign ) {
+        case OVERFLOW, UNDERFLOW -> OUTCOME;
+        case PUSH, POP -> OPERATION;
+      }
+    );
+
+  private Stacks () { }
+
+  /// Creates a Stack instrument wrapping the specified pipe.
+  ///
+  /// @param pipe the pipe from which to create the stack
+  /// @return a new Stack instrument for the specified pipe
+  /// @throws NullPointerException if the pipe parameter is `null`
+
+  @SpecRef ( "6.4" )
+  @New
+  @NotNull
+  public static Stack of (
+    @NotNull final Pipe < ? super Sign > pipe
+  ) {
+
+    return
+      new Stack (
+        requireNonNull ( pipe )
+      );
+
+  }
+
+  /// Returns a pool that creates cached Stack instruments from a conduit.
+  ///
+  /// Within the returned pool, repeated lookup of the same name returns the same instrument,
+  /// created on first lookup. Separate pools have separate identity guarantees.
+  ///
+  /// @param conduit the conduit providing sign pipes
+  /// @return a pool that creates Stack instruments
+  /// @throws NullPointerException if the conduit parameter is `null`
+
+  @SpecRef ( {"6.4", "substrates:10.1"} )
+  @New
+  @NotNull
+  public static Pool < Stack > pool (
+    @NotNull final Conduit < Sign > conduit
+  ) {
+
+    return
+      conduit.pool (
+        Stacks::of
+      );
+
+  }
+
+
+  /// A [Sign] represents the kind of action being observed in a stack interaction.
+  ///
+  /// These signs form complementary pairs representing normal operations (PUSH/POP)
+  /// and boundary violations (OVERFLOW/UNDERFLOW). The signs enable reasoning about
+  /// stack depth, recursion patterns, and capacity utilization.
+
+  @SpecRef ( {"4.2", "registry:stacks"} )
+  public enum Sign
+    implements Serventis.Sign {
+
+    /// Indicates an item was successfully added to the stack (top).
+    ///
+    /// This sign represents normal push operations. High PUSH rates without corresponding
+    /// POP signals indicate stack growth (recursion depth, nesting levels). The ratio
+    /// of PUSH to POP reveals stack fill rate.
+
+    PUSH,
+
+    /// Indicates an item was successfully removed from the stack (top).
+    ///
+    /// This sign represents normal pop operations. High POP rates indicate unwinding
+    /// (returning from calls, backtracking). Sustained POP > PUSH patterns indicate
+    /// stack draining.
+
+    POP,
+
+    /// Indicates the stack reached capacity and rejected a PUSH operation.
+    ///
+    /// Overflow signals reveal capacity violations where the stack reached its maximum
+    /// depth. Frequent overflows may indicate insufficient capacity, unbounded recursion,
+    /// or the need for iterative algorithms instead of recursive ones.
+
+    OVERFLOW,
+
+    /// Indicates the stack was empty and could not satisfy a POP operation.
+    ///
+    /// Underflow signals reveal underflow conditions where operations attempt to pop
+    /// from an empty stack. This often indicates algorithm errors, unmatched brackets
+    /// in parsing, or state machine bugs.
+
+    UNDERFLOW
+
+  }
+
+  /// The [Stack] class represents a named, observable stack from which signs are emitted.
+  ///
+  /// ## Usage
+  ///
+  /// Use domain-specific methods: `stack.push()`, `stack.pop()`, `stack.overflow()`,
+  /// `stack.underflow()`
+  ///
+  /// Stacks provide semantic methods for reporting stack operation events.
+
+  @SpecRef ( {"6.1", "6.3", "6.5", "substrates:6.1"} )
+  @Queued
+  @Provided
+  public static final class Stack
+    implements Signer < Sign > {
+
+    private final Pipe < ? super Sign > pipe;
+
+    private Stack (
+      final Pipe < ? super Sign > pipe
+    ) {
+
+      this.pipe =
+        pipe;
+
+    }
+
+    /// Emits an overflow sign from this stack.
+
+    public void overflow () {
+
+      pipe.emit (
+        OVERFLOW
+      );
+
+    }
+
+    /// Emits a pop sign from this stack.
+
+    public void pop () {
+
+      pipe.emit (
+        POP
+      );
+
+    }
+
+    /// Emits a push sign from this stack.
+
+    public void push () {
+
+      pipe.emit (
+        PUSH
+      );
+
+    }
+
+    /// Signs a stack event.
+    ///
+    /// @param sign the sign to make
+
+    @SpecRef ( "6.1" )
+    @Override
+    public void sign (
+      @NotNull final Sign sign
+    ) {
+
+      pipe.emit (
+        sign
+      );
+
+    }
+
+    /// Emits an underflow sign from this stack.
+
+    public void underflow () {
+
+      pipe.emit (
+        UNDERFLOW
+      );
+
+    }
+
+  }
+
+}
